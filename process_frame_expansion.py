@@ -255,9 +255,17 @@ class ThermalAnalysis():
         logger.debug('Breakpoints identified at: %s min,', self.breakpoints)
 
     def filter_std(self, df: pd.DataFrame, cutoff: float = 0.05):
-        subset = df.loc[df['delta_z_sd'] <= cutoff]
-        logger.info('Filtered out %i data points by delta_z SD <= %f mm',
-                     (len(df)-len(subset)), cutoff)
+        # If user used single-point sampling, all sd values are NaN
+        if all(df['delta_z_sd'].isna()):
+            subset = df
+            subset['delta_z_sd'] = 0
+            logger.info('Single Z measurements detected.' \
+                        '[bold] Ignoring SD cutoff.[/]',
+                        extra={"markup": True})
+        else:
+            subset = df.loc[df['delta_z_sd'] <= cutoff]
+            logger.info('Filtered out %i data points by delta_z SD <= %f mm',
+                        (len(df)-len(subset)), cutoff)
         return subset
 
     @property
